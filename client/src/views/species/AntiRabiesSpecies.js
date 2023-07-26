@@ -44,7 +44,7 @@ const AntiRabiesSpecies = () => {
   }, [])
   const fetchData = async () => {
     try {
-      const response = await axios.get(ip + 'anti_rabies_species')
+      const response = await axios.get(ip + table)
       const formattedData = response.data.map((item) => ({
         ...item,
         timestamp: FormatDateTime(item.timestamp),
