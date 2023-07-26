@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
 import { DeleteOutline, EditSharp } from '@mui/icons-material'
 import { MenuItem, ListItemIcon } from '@mui/material'
@@ -28,6 +28,7 @@ import {
 } from '@coreui/react'
 
 const Medication = () => {
+  const table = 'medication'
   const [data, setData] = useState([])
   const [editMode, setEditMode] = useState(false)
   const [validated, setValidated] = useState(false)
@@ -43,7 +44,7 @@ const Medication = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get(ip + 'medication')
+      const response = await axios.get(ip + table)
       const formattedData = response.data.map((item) => ({
         ...item,
         timestamp: FormatDateTime(item.timestamp),

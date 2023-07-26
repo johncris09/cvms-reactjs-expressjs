@@ -1,11 +1,11 @@
 import express from "express";
 import db from "./../db.js";
 const router = express.Router();
-const table = "medication";
+const table = "anti_rabies_species";
 
 router.get("/", async (req, res, next) => {
-  const q =
-    "SELECT * FROM `" + table + "` ORDER BY `medication`.`medication` ASC";
+  const q = " SELECT * FROM " + table + "  ORDER BY name  ASC";
+
   db.query(q, (err, result) => {
     if (err) throw err;
     res.json(result);
@@ -14,9 +14,9 @@ router.get("/", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { medication } = req.body;
+    const { name } = req.body;
     const newData = {
-      medication: medication.replace(/\s+/g, " ").trim(),
+      name: name.replace(/\s+/g, " ").trim(),
     };
     const q = "INSERT INTO " + table + " SET ?";
 
@@ -38,11 +38,10 @@ router.post("/", async (req, res, next) => {
 
 router.put("/", async (req, res, next) => {
   try {
-    const { id, medication } = req.body; // Assuming you receive id, medication in the request body
-
+    const { id, name } = req.body;
     // Perform the update operation
-    const q = "UPDATE " + table + " SET medication = ? WHERE id = ?";
-    db.query(q, [medication, id], (err, result) => {
+    const q = "UPDATE " + table + " SET name = ? WHERE id = ?";
+    db.query(q, [name, id], (err, result) => {
       if (err) {
         console.error("Error updating data:", err);
         res.status(500).json({ error: "Error updating data" });
