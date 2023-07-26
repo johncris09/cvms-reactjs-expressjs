@@ -86,6 +86,7 @@ const Anti_rabies_vaccination = () => {
         date_vaccinated: FormatDate(item.date_vaccinated),
         age: CalculateAge(item.pet_birthdate),
         timestamp: FormatDateTime(item.timestamp),
+        speciesName: item.name,
       }))
       setData(formattedData)
     } catch (error) {
@@ -111,7 +112,7 @@ const Anti_rabies_vaccination = () => {
     }
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     const form = event.currentTarget
     if (form.checkValidity() === false) {
       event.preventDefault()
@@ -134,13 +135,38 @@ const Anti_rabies_vaccination = () => {
         console.info('Update operation')
       } else {
         // Add operation
-        console.info('Add operation')
+        await addData({
+          date_vaccinated,
+          vaccine_type,
+          address,
+          owner_name,
+          pet_name,
+          pet_birthdate,
+          color,
+          sex,
+          species,
+          neutered,
+        })
       }
+
+      // Fetch updated data
+      fetchData()
+
       setValidated(false)
       // setNewDataFormModalVisible(false)
     }
     // form.reset()
     setValidated(true)
+  }
+
+  const addData = async (data) => {
+    const response = await axios.post(ip + table, data)
+    // // Show success message
+    Swal.fire({
+      title: 'Success!',
+      html: response.data.message,
+      icon: 'success',
+    })
   }
 
   const handleChange = (e) => {
@@ -160,7 +186,7 @@ const Anti_rabies_vaccination = () => {
       header: 'Vaccination Date',
     },
     {
-      accessorKey: 'address',
+      accessorKey: 'barangay',
       header: 'Address',
     },
     {
@@ -184,7 +210,7 @@ const Anti_rabies_vaccination = () => {
       header: 'Color',
     },
     {
-      accessorKey: 'species',
+      accessorKey: 'speciesName',
       header: 'Species',
     },
     {
@@ -411,7 +437,7 @@ const Anti_rabies_vaccination = () => {
                 >
                   <option value="">Choose...</option>
                   {barangayOptions.map((barangay) => (
-                    <option key={barangay.barangay} value={barangay.barangay}>
+                    <option key={barangay.barangay} value={barangay.id}>
                       {barangay.barangay}
                     </option>
                   ))}

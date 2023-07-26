@@ -4,7 +4,11 @@ const router = express.Router();
 const table = "anti_rabies_vaccination";
 
 router.get("/", async (req, res, next) => {
-  const q = " SELECT * FROM " + table + "  ORDER BY date_vaccinated  ASC";
+  const q = "SELECT * FROM anti_rabies_vaccination, barangay, anti_rabies_species \
+           WHERE anti_rabies_vaccination.address = barangay.id \
+           AND anti_rabies_vaccination.species = anti_rabies_species.id \
+           ORDER BY date_vaccinated ASC;";
+
 
   db.query(q, (err, result) => {
     if (err) throw err;
@@ -13,11 +17,15 @@ router.get("/", async (req, res, next) => {
 });
 
 router.post("/", async (req, res, next) => {
-  try {
-    const { name } = req.body;
+  try {  
     const newData = {
-      name: name.replace(/\s+/g, " ").trim(),
-    };
+      ...req.body,
+      vaccine_type: req.body.vaccine_type.replace(/\s+/g, " ").trim(),
+      owner_name: req.body.owner_name.replace(/\s+/g, " ").trim(),
+      pet_name: req.body.pet_name.replace(/\s+/g, " ").trim(),
+      color: req.body.color.replace(/\s+/g, " ").trim(),
+      
+    }; 
     const q = "INSERT INTO " + table + " SET ?";
 
     db.query(q, newData, (err, result) => {
