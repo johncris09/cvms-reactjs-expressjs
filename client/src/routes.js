@@ -8,6 +8,7 @@ const Anti_rabies_vaccination = React.lazy(() =>
   import('./views/anti_rabies_vaccination/Anti_rabies_vaccination'),
 )
 const Deworming = React.lazy(() => import('./views/deworming/Deworming'))
+const Barangay = React.lazy(() => import('./views/barangay/Barangay'))
 const User = React.lazy(() => import('./views/user/User'))
 const DatabaseBackup = React.lazy(() => import('./views/database_backup/DatabaseBackup'))
 const AntiRabiesSpecies = React.lazy(() => import('./views/species/AntiRabiesSpecies'))
@@ -37,6 +38,7 @@ const routes = [
   { path: '/species/deworming', name: 'Deworm Species', element: DewormSpecies },
   { path: '/medication', name: 'Medication', element: Medication },
   { path: '/config', name: 'Config', element: Config },
+  { path: '/barangay', name: 'Barangay', element: Barangay },
 ]
 
 export default routes

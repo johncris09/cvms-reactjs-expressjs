@@ -11,6 +11,7 @@ import {
   cilAnimal,
   cilCalendarCheck,
   cibFoursquare,
+  cibPingdom,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 const _nav = [
@@ -95,6 +96,12 @@ const _nav = [
     name: 'Activity Log',
     to: '/activity_log',
     icon: <CIcon icon={cilHistory} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Barangay',
+    to: '/barangay',
+    icon: <CIcon icon={cibPingdom} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
