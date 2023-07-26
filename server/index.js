@@ -6,6 +6,7 @@ import medicationRoute from "./routes/Medication.js"
 import barangayRoute from "./routes/Barangay.js"
 import antiRabiesSpeciesRoute from "./routes/AntiRabiesSepcies.js"
 import dewormSpeciesRoute from "./routes/DewormSpecies.js"
+import antiRabiesVaccinationRoute from "./routes/AntiRabiesVaccination.js"
 const app = express() 
 
 // middleware for server
@@ -17,6 +18,7 @@ app.use("/medication",  medicationRoute);
 app.use("/barangay",  barangayRoute);
 app.use("/anti_rabies_species",  antiRabiesSpeciesRoute);
 app.use("/deworm_species",  dewormSpeciesRoute);
+app.use("/anti_rabies_vaccination",  antiRabiesVaccinationRoute);
 
 app.get('/', (req, res) => {
     res.send("Weclome to the Server")
