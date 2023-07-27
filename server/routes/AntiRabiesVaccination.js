@@ -91,18 +91,18 @@ router.put("/", async (req, res, next) => {
 
     // Perform the update operation
     const q =
-      "UPDATE `anti_rabies_vaccination` SET " +
-      "`address` = ?, " +
-      "`color` = ?, " +
-      "`date_vaccinated` = ?, " +
-      "`pet_name` = ?, " +
-      "`neutered` = ?, " +
-      "`owner_name` = ?, " +
-      "`pet_birthdate` = ?, " +
-      "`species` = ?, " +
-      "`sex` = ?, " +
-      "`vaccine_type` = ? " +
-      "WHERE `id` = ?;";
+      "UPDATE `anti_rabies_vaccination` SET \
+      `address` = ?, \
+      `color` = ?, \
+      `date_vaccinated` = ?, \
+      `pet_name` = ?, \
+      `neutered` = ?, \
+      `owner_name` = ?, \
+      `pet_birthdate` = ?, \
+      `species` = ?, \
+      `sex` = ?, \
+      `vaccine_type` = ? \
+      WHERE `id` = ?;";
 
     db.query(
       q,
