@@ -14,6 +14,41 @@ router.get("/", async (req, res, next) => {
     res.json(result);
   });
 });
+router.get("/report", async (req, res, next) => {
+  const { start_date, end_date, address } = req.query;
+  
+  let q = "SELECT dog_pound.*, barangay.barangay as address FROM `dog_pound`, barangay \
+  where dog_pound.address = barangay.id \
+  and date >= ? and date <= ?";
+
+  const queryParams = [start_date, end_date];
+
+  // Check if the 'address' parameter is provided and not empty
+  if (address && address.trim() !== '') {
+    q += " and address = ?";
+    queryParams.push(address);
+  }
+
+  q += " order by dog_pound.date desc;";
+
+  db.query(q, queryParams, (err, results) => {
+    if (err) {
+      console.error("Error fetching data:", err);
+      res.status(500).json({ error: "Error fetching data" });
+      return;
+    }
+    
+    if (results.length === 0) {
+      // If results array is empty, send an empty array as the response
+      res.json([]);
+      return;
+    }
+
+    res.json(results);
+  });
+});
+
+
 
 router.get("/:id", async (req, res, next) => {
   try {
@@ -39,7 +74,6 @@ router.get("/:id", async (req, res, next) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
-
 router.post("/", async (req, res, next) => {
   try {
     const newData = {

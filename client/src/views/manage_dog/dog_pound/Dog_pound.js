@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
 import { ExportToCsv } from 'export-to-csv'
+import { OroquietaCityLogo, cityVetLogo } from './../../../helper/LogoReport'
 import { DeleteOutline, EditSharp, Handshake, MedicationLiquid } from '@mui/icons-material'
 import { MenuItem, ListItemIcon, Box, darken } from '@mui/material'
 import CalculateAge from './../../../helper/CalculateAge'
@@ -15,6 +16,9 @@ import axios from 'axios'
 import ip from './../../../constant/ip'
 import Draggable from 'react-draggable'
 import Swal from 'sweetalert2'
+import pdfMake from 'pdfmake/build/pdfmake'
+import pdfFonts from 'pdfmake/build/vfs_fonts'
+import withReactContent from 'sweetalert2-react-content'
 import {
   CButton,
   CCard,
@@ -31,6 +35,8 @@ import {
   CFormSelect,
 } from '@coreui/react'
 
+const MySwal = withReactContent(Swal)
+pdfMake.vfs = pdfFonts.pdfMake.vfs
 const Dog_pound = () => {
   const table = 'dog_pound'
   const [data, setData] = useState([])
@@ -38,6 +44,7 @@ const Dog_pound = () => {
   const [editMode, setEditMode] = useState(false)
   const [validated, setValidated] = useState(false)
   const [newDataFormModalVisible, setNewDataFormModalVisible] = useState(false)
+  const [reportFormModalVisible, setReportFormModalVisible] = useState(false)
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
   const [selectedItemId, setSelectedItemId] = useState(null)
   const [formData, setFormData] = useState({
@@ -48,6 +55,11 @@ const Dog_pound = () => {
     color: '',
     sex: '',
     size: '',
+    address: '',
+  })
+  const [formReportData, setFormReportData] = useState({
+    start_date: '',
+    end_date: '',
     address: '',
   })
 
@@ -73,6 +85,204 @@ const Dog_pound = () => {
     setNewDataFormModalVisible(true)
     setValidated(false)
     setSelectedItemId(null)
+  }
+  const handleReport = () => {
+    setReportFormModalVisible(true)
+  }
+
+  const handleReportSubmit = async (event) => {
+    const form = event.currentTarget
+    try {
+      if (form.checkValidity() === false) {
+        event.preventDefault()
+        event.stopPropagation()
+      } else {
+        event.preventDefault()
+        const formData = new FormData(form)
+        const start_date = formData.get('start_date')
+        const end_date = formData.get('end_date')
+        const address = formData.get('address')
+        generateReport({ start_date, end_date, address })
+        setValidated(false)
+      }
+      setValidated(true)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    }
+  }
+
+  const generateReport = async (data) => {
+    const response = await axios.get(ip + table + '/report', {
+      params: {
+        ...data,
+      },
+    })
+
+    // get Barangay
+    let barangayName = 'All'
+
+    // Assuming barangayOptions is an array of objects with properties 'id' and 'barangay'
+    barangayOptions.forEach((option) => {
+      if (option.id == formReportData.address) {
+        barangayName = option.barangay
+        return false // This will break out of the forEach loop
+      }
+    })
+
+    // generate Report
+    if (response.data.length > 0) {
+      const content = []
+      // Add table header
+      const tableHeader = [
+        { text: 'Date', style: 'tableHeader', bold: true },
+        { text: 'OR Number', style: 'tableHeader', bold: true },
+        { text: 'Owner Name', style: 'tableHeader', bold: true },
+        { text: 'Pet Name', style: 'tableHeader', bold: true },
+        { text: 'Color', style: 'tableHeader', bold: true },
+        { text: 'Sex', style: 'tableHeader', bold: true },
+        { text: 'Size', style: 'tableHeader', bold: true },
+        { text: 'Address', style: 'tableHeader', bold: true },
+      ]
+
+      content.push(tableHeader)
+      // Add table rows
+      for (const item of response.data) {
+        const formattedDate = FormatDate(item.date)
+        const tableRow = [
+          formattedDate,
+          item.or_number,
+          item.owner_name,
+          item.pet_name,
+          item.color,
+          item.sex,
+          item.size,
+          item.address,
+        ]
+        content.push(tableRow)
+      }
+      const currentDateTime = new Date().toLocaleString('en-US')
+      const documentDefinition = {
+        footer: function (currentPage, pageCount) {
+          return {
+            columns: [
+              {
+                text: `Date Printed: ${currentDateTime}`,
+                alignment: 'left',
+                fontSize: 8,
+                margin: [20, 0],
+              },
+              {
+                text: `Page ${currentPage} of ${pageCount}`,
+                alignment: 'right',
+                fontSize: 8,
+                margin: [0, 0, 20, 0],
+              },
+            ],
+            margin: [20, 10],
+          }
+        },
+        content: [
+          {
+            columns: [
+              {
+                width: 'auto',
+                image: cityVetLogo,
+                fit: [50, 50],
+              },
+              {
+                text: [
+                  'Republic of the Philippines\n',
+                  'OFFICE OF THE VETERINARIAN\n',
+                  'Oroquieta City\n\n',
+                  {
+                    text: 'City of Good Life',
+                    style: 'subheaderText',
+                    alignment: 'center',
+                    italics: true,
+                    bold: true,
+                  },
+                ],
+                style: 'headerText',
+                bold: false,
+                alignment: 'center',
+              },
+              {
+                width: 'auto',
+                image: OroquietaCityLogo,
+                fit: [50, 50],
+                alignment: 'right',
+              },
+            ],
+          },
+          {
+            text: '\n\n', // Add some spacing between the header and the table
+          },
+          {
+            columns: [
+              {
+                width: 'auto',
+                text: 'Barangay: ' + barangayName,
+                text: [
+                  'Barangay: ',
+                  {
+                    text: barangayName,
+                    bold: true,
+                    decoration: 'underline',
+                  },
+                ],
+                fit: [200, 200],
+              },
+              {
+                text: [' '],
+                style: 'headerText',
+                bold: false,
+                alignment: 'center',
+              },
+              {
+                text: [
+                  'Date: ',
+                  {
+                    text:
+                      FormatDate(formReportData.start_date) +
+                      ' - ' +
+                      FormatDate(formReportData.end_date),
+                    bold: true,
+                    decoration: 'underline',
+                  },
+                ],
+                fit: [200, 200],
+                alignment: 'right',
+              },
+            ],
+          },
+          {
+            style: 'tableDesign',
+            table: {
+              body: content,
+            },
+            alignment: 'center',
+          },
+        ],
+        styles: {
+          tableDesign: {
+            margin: [0, 5, 0, 15],
+            fontSize: 10,
+          },
+          footer: {
+            fontSize: 8,
+          },
+        },
+      }
+      const pdfDoc = pdfMake.createPdf(documentDefinition)
+      pdfDoc.open()
+    } else {
+      // Show error message
+      MySwal.fire({
+        title: <strong>No record found</strong>,
+        html: <i>There are no records matching your search criteria.</i>,
+        icon: 'info',
+      })
+    }
   }
 
   const fetchData = async () => {
@@ -172,7 +382,6 @@ const Dog_pound = () => {
 
   const updateData = async (data) => {
     const response = await axios.put(ip + table, data)
-    console.info(response.data)
     // Show success message
     Swal.fire({
       title: 'Success!',
@@ -211,6 +420,11 @@ const Dog_pound = () => {
       updatedValue = ConvertToTitleCase(value)
     }
     setFormData({ ...formData, [name]: updatedValue })
+  }
+
+  const handleReportChange = (e) => {
+    const { name, value } = e.target
+    setFormReportData({ ...formReportData, [name]: value })
   }
 
   const columns = [
@@ -306,6 +520,14 @@ const Dog_pound = () => {
           <CCardHeader>
             <strong>Dog Pound</strong>
             <>
+              <CButton
+                color="success"
+                variant="outline"
+                className="float-end"
+                onClick={handleReport}
+              >
+                <FontAwesomeIcon icon={faFilePdf} /> Generate Report
+              </CButton>
               <CButton
                 color="primary"
                 variant="outline"
@@ -423,20 +645,11 @@ const Dog_pound = () => {
                     Delete
                   </MenuItem>,
                   <MenuItem
-                    key={1}
+                    key={2}
                     onClick={async () => {
                       closeMenu()
                       let id = row.original.id
                       console.info(id)
-                      // setFormAdoptData({
-                      //   ...formAdoptData,
-                      //   dogPoundId: dogId,
-                      //   date: '',
-                      //   owner_name: '',
-                      //   address: '',
-                      //   status: '',
-                      // })
-                      // setAdoptFormModalVisible(true)
                     }}
                     sx={{ m: 0 }}
                   >
@@ -446,18 +659,11 @@ const Dog_pound = () => {
                     Adopt/Claim
                   </MenuItem>,
                   <MenuItem
-                    key={1}
+                    key={3}
                     onClick={() => {
                       closeMenu()
                       let id = row.original.id
                       console.info(id)
-                      // setFormDisposedData({
-                      //   ...formDisposedData,
-                      //   dogPoundId: dogId,
-                      //   date: '',
-                      //   medicine: '',
-                      // })
-                      // setDisposedFormModalVisible(true)
                     }}
                     sx={{ m: 0 }}
                   >
@@ -473,6 +679,7 @@ const Dog_pound = () => {
                       <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
                     </CButton>
                     <CButton
+                      size="md"
                       disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
                       //only export selected rows
                       onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
@@ -684,6 +891,100 @@ const Dog_pound = () => {
               <CCol xs={12}>
                 <CButton color="primary" type="submit" className="float-end">
                   {editMode ? 'Update' : 'Submit form'}
+                </CButton>
+              </CCol>
+            </CForm>
+          </CModalBody>
+        </CModal>
+      </Draggable>
+
+      {/* Report */}
+      <Draggable
+        handle=".modal-header"
+        position={modalPosition}
+        onStop={(e, data) => {
+          setModalPosition({ x: data.x, y: data.y })
+        }}
+      >
+        <CModal
+          alignment="center"
+          visible={reportFormModalVisible}
+          onClose={() => setReportFormModalVisible(false)}
+          backdrop="static"
+          keyboard={false}
+          size="lg"
+        >
+          <CModalHeader>
+            <CModalTitle>Generate Report</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <RequiredNote />
+            <CForm
+              className="row g-3 needs-validation"
+              noValidate
+              validated={validated}
+              onSubmit={handleReportSubmit}
+            >
+              <CCol md={6}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="Start Date is required"
+                  id="start-date"
+                  label={
+                    <>
+                      Start Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="start_date"
+                  value={formReportData.start_date}
+                  onChange={handleReportChange}
+                  required
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="End Date is required"
+                  id="end-date"
+                  label={
+                    <>
+                      End Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="end_date"
+                  value={formReportData.end_date}
+                  onChange={handleReportChange}
+                  required
+                />
+              </CCol>
+
+              <CCol md={12}>
+                <CFormSelect
+                  id="address"
+                  label="Address"
+                  name="address"
+                  value={formReportData.address}
+                  onChange={handleReportChange}
+                >
+                  <option value="">Choose...</option>
+                  {barangayOptions.map((barangay) => (
+                    <option key={barangay.id} value={barangay.id}>
+                      {barangay.barangay}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
+
+              <hr />
+              <CCol xs={12}>
+                <CButton color="primary" type="submit" className="float-end">
+                  Generate
                 </CButton>
               </CCol>
             </CForm>
