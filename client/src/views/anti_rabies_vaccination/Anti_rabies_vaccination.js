@@ -86,7 +86,6 @@ const Anti_rabies_vaccination = () => {
         date_vaccinated: FormatDate(item.date_vaccinated),
         age: CalculateAge(item.pet_birthdate),
         timestamp: FormatDateTime(item.timestamp),
-        speciesName: item.name,
       }))
       setData(formattedData)
     } catch (error) {
@@ -113,55 +112,110 @@ const Anti_rabies_vaccination = () => {
   }
 
   const handleSubmit = async (event) => {
+    event.preventDefault()
     const form = event.currentTarget
-    if (form.checkValidity() === false) {
-      event.preventDefault()
-      event.stopPropagation()
-    } else {
-      event.preventDefault()
-      const _formData = new FormData(form)
-      const date_vaccinated = _formData.get('date_vaccinated')
-      const vaccine_type = _formData.get('vaccine_type')
-      const address = _formData.get('address')
-      const owner_name = _formData.get('owner_name')
-      const pet_name = _formData.get('pet_name')
-      const pet_birthdate = _formData.get('pet_birthdate')
-      const color = _formData.get('color')
-      const sex = _formData.get('sex')
-      const species = _formData.get('species')
-      const neutered = _formData.get('neutered')
-      if (selectedItemId) {
-        // Update operation
-        console.info('Update operation')
+    const _formData = new FormData(form)
+    const date_vaccinated = _formData.get('date_vaccinated')
+    const vaccine_type = _formData.get('vaccine_type')
+    const address = _formData.get('address')
+    const owner_name = _formData.get('owner_name')
+    const pet_name = _formData.get('pet_name')
+    const pet_birthdate = _formData.get('pet_birthdate')
+    const color = _formData.get('color')
+    const sex = _formData.get('sex')
+    const species = _formData.get('species')
+    const neutered = _formData.get('neutered')
+
+    try {
+      if (!form.checkValidity()) {
+        form.reportValidity()
       } else {
-        // Add operation
-        await addData({
-          date_vaccinated,
-          vaccine_type,
-          address,
-          owner_name,
-          pet_name,
-          pet_birthdate,
-          color,
-          sex,
-          species,
-          neutered,
-        })
+        if (selectedItemId) {
+          // Update operation
+          await updateData({
+            date_vaccinated,
+            vaccine_type,
+            address,
+            owner_name,
+            pet_name,
+            pet_birthdate,
+            color,
+            sex,
+            species,
+            neutered,
+            id: selectedItemId,
+          })
+        } else {
+          // Add operation
+          // Add operation
+          await addData({
+            date_vaccinated,
+            vaccine_type,
+            address,
+            owner_name,
+            pet_name,
+            pet_birthdate,
+            color,
+            sex,
+            species,
+            neutered,
+          })
+          setFormData({
+            date_vaccinated: '',
+            vaccine_type: '',
+            owner_name: '',
+            pet_name: '',
+            address: '',
+            pet_birthdate: '',
+            color: '',
+            sex: '',
+            species: '',
+            neutered: '',
+          })
+          setValidated(false)
+        }
+
+        // Fetch updated data
+        fetchData()
+
+        setValidated(true)
+        setNewDataFormModalVisible(false)
       }
-
-      // Fetch updated data
-      fetchData()
-
-      setValidated(false)
-      // setNewDataFormModalVisible(false)
+    } catch (error) {
+      // Show error message
+      Swal.fire({
+        title: 'Error!',
+        html: GetErrorMessage(error),
+        icon: 'error',
+      })
     }
-    // form.reset()
-    setValidated(true)
+  }
+
+  const updateData = async (data) => {
+    const response = await axios.put(ip + table, data)
+
+    // Show success message
+    Swal.fire({
+      title: 'Success!',
+      html: response.data.message,
+      icon: 'success',
+    })
   }
 
   const addData = async (data) => {
     const response = await axios.post(ip + table, data)
     // // Show success message
+    Swal.fire({
+      title: 'Success!',
+      html: response.data.message,
+      icon: 'success',
+    })
+  }
+
+  const deleteData = async (id) => {
+    const response = await axios.delete(ip + table, { data: { id: id } })
+
+    // Show success message
     Swal.fire({
       title: 'Success!',
       html: response.data.message,
@@ -186,7 +240,7 @@ const Anti_rabies_vaccination = () => {
       header: 'Vaccination Date',
     },
     {
-      accessorKey: 'barangay',
+      accessorKey: 'address',
       header: 'Address',
     },
     {
@@ -210,7 +264,7 @@ const Anti_rabies_vaccination = () => {
       header: 'Color',
     },
     {
-      accessorKey: 'speciesName',
+      accessorKey: 'species',
       header: 'Species',
     },
     {
@@ -262,13 +316,44 @@ const Anti_rabies_vaccination = () => {
                     onClick={async () => {
                       closeMenu()
 
-                      // setFormData({
-                      //   medication: row.original.medication,
-                      // })
+                      let id = row.original.id
+                      try {
+                        const response = await axios.get(ip + table + '/' + id)
+                        var rowData = response.data
+                        const dateString = rowData.date_vaccinated
 
-                      // setSelectedItemId(row.original.id) // Set the selected item ID
-                      // setNewDataFormModalVisible(true)
-                      // setEditMode(true)
+                        // Convert the date string to a Date object
+                        const date = new Date(dateString)
+                        // Add one day to the Date object
+                        date.setUTCDate(date.getUTCDate() + 1)
+
+                        // Extract the updated year, month, and day parts after adding one day
+                        const updatedYear = date.getUTCFullYear()
+                        const updatedMonth = String(date.getUTCMonth() + 1).padStart(2, '0')
+                        const updatedDay = String(date.getUTCDate()).padStart(2, '0')
+
+                        // Format the updated date in Y-m-d format
+                        const updatedFormattedDate = `${updatedYear}-${updatedMonth}-${updatedDay}`
+
+                        setFormData({
+                          date_vaccinated: updatedFormattedDate,
+                          vaccine_type: rowData.vaccine_type,
+                          owner_name: rowData.owner_name,
+                          pet_name: rowData.pet_name,
+                          color: rowData.color,
+                          sex: rowData.sex,
+                          species: rowData.species,
+                          address: rowData.address,
+                          neutered: rowData.neutered,
+                          pet_birthdate: rowData.pet_birthdate,
+                        })
+
+                        setSelectedItemId(row.original.id) // Set the selected item ID
+                        setNewDataFormModalVisible(true)
+                        setEditMode(true)
+                      } catch (error) {
+                        console.error('Error fetching data:', error)
+                      }
                     }}
                     sx={{ m: 0 }}
                   >
@@ -281,21 +366,22 @@ const Anti_rabies_vaccination = () => {
                     key={1}
                     onClick={() => {
                       closeMenu()
-                      // Swal.fire({
-                      //   title: 'Are you sure?',
-                      //   text: "You won't be able to revert this!",
-                      //   icon: 'warning',
-                      //   showCancelButton: true,
-                      //   confirmButtonColor: '#3085d6',
-                      //   cancelButtonColor: '#d33',
-                      //   confirmButtonText: 'Yes, delete it!',
-                      // }).then(async (result) => {
-                      //   if (result.isConfirmed) {
-                      //     let itemId = row.original.id
-                      //     await deleteData(itemId)
-                      //     fetchData()
-                      //   }
-                      // })
+
+                      Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                      }).then(async (result) => {
+                        if (result.isConfirmed) {
+                          let itemId = row.original.id
+                          await deleteData(itemId)
+                          fetchData()
+                        }
+                      })
                     }}
                     sx={{ m: 0 }}
                   >

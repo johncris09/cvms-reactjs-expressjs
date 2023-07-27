@@ -4,11 +4,12 @@ const router = express.Router();
 const table = "anti_rabies_vaccination";
 
 router.get("/", async (req, res, next) => {
-  const q = "SELECT * FROM anti_rabies_vaccination, barangay, anti_rabies_species \
-           WHERE anti_rabies_vaccination.address = barangay.id \
-           AND anti_rabies_vaccination.species = anti_rabies_species.id \
-           ORDER BY date_vaccinated ASC;";
-
+  const q =
+    "SELECT anti_rabies_vaccination.*, barangay.barangay as address, anti_rabies_species.name as species \
+           FROM anti_rabies_vaccination, barangay, anti_rabies_species \
+           where anti_rabies_vaccination.address = barangay.id \
+           and anti_rabies_vaccination.species = anti_rabies_species.id \
+           ORDER BY anti_rabies_vaccination.date_vaccinated desc;";
 
   db.query(q, (err, result) => {
     if (err) throw err;
@@ -16,16 +17,44 @@ router.get("/", async (req, res, next) => {
   });
 });
 
+router.get("/:id", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const q =
+      "SELECT * FROM anti_rabies_vaccination, barangay, anti_rabies_species \
+    WHERE anti_rabies_vaccination.address = barangay.id \
+    AND anti_rabies_vaccination.species = anti_rabies_species.id \
+    AND anti_rabies_vaccination.id = ? ";
+
+    db.query(q, [id], (err, results) => {
+      if (err) {
+        console.error("Error fetching data:", err);
+        res.status(500).json({ error: "Error fetching data" });
+        return;
+      }
+      if (results.length === 0) {
+        // If results array is empty, send an error response indicating no data found
+        res.status(404).json({ error: "No data found" });
+        return;
+      }
+
+      res.json(results[0]);
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Error fetching data" });
+  }
+});
+
 router.post("/", async (req, res, next) => {
-  try {  
+  try {
     const newData = {
       ...req.body,
       vaccine_type: req.body.vaccine_type.replace(/\s+/g, " ").trim(),
       owner_name: req.body.owner_name.replace(/\s+/g, " ").trim(),
       pet_name: req.body.pet_name.replace(/\s+/g, " ").trim(),
       color: req.body.color.replace(/\s+/g, " ").trim(),
-      
-    }; 
+    };
     const q = "INSERT INTO " + table + " SET ?";
 
     db.query(q, newData, (err, result) => {
@@ -46,19 +75,61 @@ router.post("/", async (req, res, next) => {
 
 router.put("/", async (req, res, next) => {
   try {
-    const { id, name } = req.body;
-    // Perform the update operation
-    const q = "UPDATE " + table + " SET name = ? WHERE id = ?";
-    db.query(q, [name, id], (err, result) => {
-      if (err) {
-        console.error("Error updating data:", err);
-        res.status(500).json({ error: "Error updating data" });
-        return;
-      }
+    const {
+      id,
+      address,
+      color,
+      date_vaccinated,
+      pet_name,
+      neutered,
+      owner_name,
+      pet_birthdate,
+      species,
+      sex,
+      vaccine_type,
+    } = req.body;
 
-      console.log("Data updated successfully:", result);
-      res.status(200).json({ message: "Data updated successfully" });
-    });
+    // Perform the update operation
+    const q =
+      "UPDATE `anti_rabies_vaccination` SET " +
+      "`address` = ?, " +
+      "`color` = ?, " +
+      "`date_vaccinated` = ?, " +
+      "`pet_name` = ?, " +
+      "`neutered` = ?, " +
+      "`owner_name` = ?, " +
+      "`pet_birthdate` = ?, " +
+      "`species` = ?, " +
+      "`sex` = ?, " +
+      "`vaccine_type` = ? " +
+      "WHERE `id` = ?;";
+
+    db.query(
+      q,
+      [
+        address,
+        color,
+        date_vaccinated,
+        pet_name,
+        neutered,
+        owner_name,
+        pet_birthdate,
+        species,
+        sex,
+        vaccine_type,
+        id,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error("Error updating data:", err);
+          res.status(500).json({ error: "Error updating data" });
+          return;
+        }
+
+        console.log("Data updated successfully:", result);
+        res.status(200).json({ message: "Data updated successfully" });
+      }
+    );
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Error updating data" });
@@ -67,6 +138,7 @@ router.put("/", async (req, res, next) => {
 
 router.delete("/", async (req, res, next) => {
   try {
+    
     const { id } = req.body;
     // Perform the delete operation
     const q = "DELETE FROM " + table + " WHERE id = ?";
