@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
-import { DeleteOutline, EditSharp } from '@mui/icons-material'
-import { MenuItem, ListItemIcon } from '@mui/material'
+import { ExportToCsv } from 'export-to-csv'
+import { DeleteOutline, EditSharp, Handshake, MedicationLiquid } from '@mui/icons-material'
+import { MenuItem, ListItemIcon, Box, darken } from '@mui/material'
 import CalculateAge from './../../../helper/CalculateAge'
 import RequiredNote from './../../../helper/RequiredNote'
 import ConvertToTitleCase from './../../../helper/ConvertToTitleCase'
@@ -9,7 +10,7 @@ import FormatDateTime from './../../../helper/FormatDateTime'
 import FormatDate from './../../../helper/FormatDate'
 import GetErrorMessage from './../../../helper/GetErrorMessage'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons'
+import { faPlusCircle, faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons'
 import axios from 'axios'
 import ip from './../../../constant/ip'
 import Draggable from 'react-draggable'
@@ -211,6 +212,7 @@ const Dog_pound = () => {
     }
     setFormData({ ...formData, [name]: updatedValue })
   }
+
   const columns = [
     {
       accessorKey: 'date',
@@ -250,27 +252,89 @@ const Dog_pound = () => {
     },
   ]
 
+  const csvOptions = {
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalSeparator: '.',
+    showLabels: true,
+    useBom: true,
+    useKeysAsHeaders: false,
+    headers: columns.map((c) => c.header),
+  }
+
+  const csvExporter = new ExportToCsv(csvOptions)
+
+  const handleExportRows = (rows) => {
+    const exportedData = rows
+      .map((row) => row.original)
+      .map((item) => {
+        return {
+          date: item.date,
+          or_number: item.or_number,
+          owner_name: item.owner_name,
+          pet_name: item.pet_name,
+          color: item.color,
+          sex: item.sex,
+          size: item.size,
+          address: item.address,
+          created_at: item.timestamp,
+        }
+      })
+    csvExporter.generateCsv(exportedData)
+  }
+  const handleExportData = () => {
+    const exportedData = data.map((item) => {
+      return {
+        date: item.date,
+        or_number: item.or_number,
+        owner_name: item.owner_name,
+        pet_name: item.pet_name,
+        color: item.color,
+        sex: item.sex,
+        size: item.size,
+        address: item.address,
+        created_at: item.timestamp,
+      }
+    })
+    csvExporter.generateCsv(exportedData)
+  }
+
   return (
     <CRow>
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader>
-            <strong>Anti Rabies Vaccination</strong>
-
-            <CButton
-              color="primary"
-              variant="outline"
-              className="float-end mx-1"
-              onClick={handleAdd}
-            >
-              <FontAwesomeIcon icon={faPlusCircle} /> Add New Data
-            </CButton>
+            <strong>Dog Pound</strong>
+            <>
+              <CButton
+                color="primary"
+                variant="outline"
+                className="float-end mx-1"
+                onClick={handleAdd}
+              >
+                <FontAwesomeIcon icon={faPlusCircle} /> Add New Data
+              </CButton>
+            </>
           </CCardHeader>
           <CCardBody>
             <>
               <MaterialReactTable
                 columns={columns}
                 data={data}
+                muiTablePaperProps={{
+                  elevation: 0,
+                  sx: {
+                    borderRadius: '0',
+                    border: '1px dashed #e0e0e0',
+                  },
+                }}
+                muiTableBodyProps={{
+                  sx: (theme) => ({
+                    '& tr:nth-of-type(odd)': {
+                      backgroundColor: darken(theme.palette.background.default, 0.05),
+                    },
+                  }),
+                }}
                 enableColumnFilterModes
                 enableColumnOrdering
                 enableGrouping
@@ -279,6 +343,7 @@ const Dog_pound = () => {
                 enableColumnResizing
                 initialState={{ density: 'compact' }}
                 positionToolbarAlertBanner="bottom"
+                enableRowSelection
                 renderRowActionMenuItems={({ closeMenu, row }) => [
                   <MenuItem
                     key={0}
@@ -357,7 +422,66 @@ const Dog_pound = () => {
                     </ListItemIcon>
                     Delete
                   </MenuItem>,
+                  <MenuItem
+                    key={1}
+                    onClick={async () => {
+                      closeMenu()
+                      let id = row.original.id
+                      console.info(id)
+                      // setFormAdoptData({
+                      //   ...formAdoptData,
+                      //   dogPoundId: dogId,
+                      //   date: '',
+                      //   owner_name: '',
+                      //   address: '',
+                      //   status: '',
+                      // })
+                      // setAdoptFormModalVisible(true)
+                    }}
+                    sx={{ m: 0 }}
+                  >
+                    <ListItemIcon>
+                      <Handshake />
+                    </ListItemIcon>
+                    Adopt/Claim
+                  </MenuItem>,
+                  <MenuItem
+                    key={1}
+                    onClick={() => {
+                      closeMenu()
+                      let id = row.original.id
+                      console.info(id)
+                      // setFormDisposedData({
+                      //   ...formDisposedData,
+                      //   dogPoundId: dogId,
+                      //   date: '',
+                      //   medicine: '',
+                      // })
+                      // setDisposedFormModalVisible(true)
+                    }}
+                    sx={{ m: 0 }}
+                  >
+                    <ListItemIcon>
+                      <MedicationLiquid />
+                    </ListItemIcon>
+                    Disposed
+                  </MenuItem>,
                 ]}
+                renderTopToolbarCustomActions={({ table }) => (
+                  <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
+                    <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
+                      <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
+                    </CButton>
+                    <CButton
+                      disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
+                      //only export selected rows
+                      onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
+                      variant="outline"
+                    >
+                      <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
+                    </CButton>
+                  </Box>
+                )}
               />
             </>
           </CCardBody>
@@ -365,7 +489,6 @@ const Dog_pound = () => {
       </CCol>
 
       {/* Add New Data */}
-
       <Draggable
         handle=".modal-header"
         position={modalPosition}
