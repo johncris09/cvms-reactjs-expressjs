@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
 import FormatDateTime from 'src/helper/FormatDateTime'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons'
 import axios from 'axios'
 import ip from './../../constant/ip'
-import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react'
+import { CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react'
 
 const Barangay = () => {
   const table = 'barangay'
