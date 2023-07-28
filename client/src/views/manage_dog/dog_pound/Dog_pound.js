@@ -45,6 +45,8 @@ const Dog_pound = () => {
   const [validated, setValidated] = useState(false)
   const [newDataFormModalVisible, setNewDataFormModalVisible] = useState(false)
   const [reportFormModalVisible, setReportFormModalVisible] = useState(false)
+  const [adoptFormModalVisible, setAdoptFormModalVisible] = useState(false)
+  const [disposedFormModalVisible, setDisposedFormModalVisible] = useState(false)
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
   const [selectedItemId, setSelectedItemId] = useState(null)
   const [formData, setFormData] = useState({
@@ -61,6 +63,18 @@ const Dog_pound = () => {
     start_date: '',
     end_date: '',
     address: '',
+  })
+  const [formAdoptData, setFormAdoptData] = useState({
+    dogPoundId: '',
+    date: '',
+    owner_name: '',
+    address: '',
+    status: '',
+  })
+  const [formDisposedData, setFormDisposedData] = useState({
+    dogPoundId: '',
+    date: '',
+    medicine: '',
   })
 
   useEffect(() => {
@@ -427,6 +441,158 @@ const Dog_pound = () => {
     setFormReportData({ ...formReportData, [name]: value })
   }
 
+  const handleAdoptClaimSubmit = async (event) => {
+    const form = event.currentTarget
+    if (form.checkValidity() === false) {
+      event.preventDefault()
+      event.stopPropagation()
+    } else {
+      event.preventDefault()
+      const _formData = new FormData(form)
+
+      try {
+        let id = formAdoptData.dogPoundId
+        const response = await axios.get(ip + table + '/' + id)
+        var rowData = response.data
+
+        // Convert the date string to a Date object
+        const date = new Date(response.data.date)
+        // Add one day to the Date object
+        date.setUTCDate(date.getUTCDate() + 1)
+
+        // Extract the updated year, month, and day parts after adding one day
+        const updatedYear = date.getUTCFullYear()
+        const updatedMonth = String(date.getUTCMonth() + 1).padStart(2, '0')
+        const updatedDay = String(date.getUTCDate()).padStart(2, '0')
+
+        // Format the updated date in Y-m-d format
+        const updatedFormattedDate = `${updatedYear}-${updatedMonth}-${updatedDay}`
+
+        // Remove the 'reference' and 'timestamp' keys
+        const { reference: removedReference, timestamp: removedTimestamp, ...newObj } = rowData
+
+        const adoptData = {
+          ...newObj,
+          date: updatedFormattedDate,
+          adopt_date: _formData.get('date'),
+          adopt_owner_name: _formData.get('owner_name'),
+          adopt_address: _formData.get('address'),
+          status: _formData.get('status'),
+        }
+
+        // insert to adopt
+        await axios.post(ip + 'adopt_claim', adoptData)
+        // delete data from dop pound
+        await axios.delete(ip + table, { data: { id: id } })
+
+        setFormAdoptData({
+          ...formAdoptData,
+          date: '',
+          owner_name: '',
+          address: '',
+          status: '',
+        })
+        setValidated(false)
+
+        MySwal.fire({
+          title: <strong>Success!</strong>,
+          html: <i>New Record Successfully Added!</i>,
+          icon: 'success',
+        })
+        setAdoptFormModalVisible(false)
+      } catch (error) {
+        console.error('Error moving data:', error)
+      }
+    }
+    setValidated(true)
+  }
+
+  const handleDisposedSubmit = async (event) => {
+    const form = event.currentTarget
+    if (form.checkValidity() === false) {
+      event.preventDefault()
+      event.stopPropagation()
+    } else {
+      event.preventDefault()
+      const _formData = new FormData(form)
+      // const timestamp = serverTimestamp()
+
+      try {
+        let id = formDisposedData.dogPoundId
+        const dogPoundData = await axios.get(ip + table + '/' + id)
+        var rowData = dogPoundData.data
+
+        // Convert the date string to a Date object
+        const date = new Date(rowData.date)
+        // Add one day to the Date object
+        date.setUTCDate(date.getUTCDate() + 1)
+
+        // Extract the updated year, month, and day parts after adding one day
+        const updatedYear = date.getUTCFullYear()
+        const updatedMonth = String(date.getUTCMonth() + 1).padStart(2, '0')
+        const updatedDay = String(date.getUTCDate()).padStart(2, '0')
+
+        // Format the updated date in Y-m-d format
+        const updatedFormattedDate = `${updatedYear}-${updatedMonth}-${updatedDay}`
+
+        // Remove the 'reference' and 'timestamp' keys
+        const { reference: removedReference, timestamp: removedTimestamp, ...newObj } = rowData
+
+        const disposedDogData = {
+          ...newObj,
+          date: updatedFormattedDate,
+          disposed_date: _formData.get('date'),
+          medicine: _formData.get('medicine'),
+        }
+
+        // insert to adopt
+        await axios.post(ip + 'disposed_dog', disposedDogData)
+        // delete data from dop pound
+        await axios.delete(ip + table, { data: { id: id } })
+
+        setFormDisposedData({
+          ...formDisposedData,
+          date: '',
+          medicine: '',
+        })
+        setValidated(false)
+
+        MySwal.fire({
+          title: <strong>Success!</strong>,
+          html: <i>New Record Successfully Added!</i>,
+          icon: 'success',
+        })
+
+        setDisposedFormModalVisible(false)
+      } catch (error) {
+        console.error('Error moving data:', error)
+      }
+    }
+    setValidated(true)
+  }
+
+  const handleAdoptChange = (e) => {
+    const { name, value, type } = e.target
+    let updatedValue = value
+
+    // Convert text inputs to title case
+    if (type === 'text') {
+      updatedValue = ConvertToTitleCase(value)
+    }
+    setFormAdoptData({ ...formAdoptData, [name]: updatedValue })
+  }
+
+  const handleDisposedChange = (e) => {
+    const { name, value, type } = e.target
+    let updatedValue = value
+
+    // Convert text inputs to title case
+    if (type === 'text') {
+      updatedValue = ConvertToTitleCase(value)
+    }
+    setFormDisposedData({ ...formDisposedData, [name]: updatedValue })
+  }
+
   const columns = [
     {
       accessorKey: 'date',
@@ -649,7 +815,15 @@ const Dog_pound = () => {
                     onClick={async () => {
                       closeMenu()
                       let id = row.original.id
-                      console.info(id)
+                      setFormAdoptData({
+                        ...formAdoptData,
+                        dogPoundId: id,
+                        date: '',
+                        owner_name: '',
+                        address: '',
+                        status: '',
+                      })
+                      setAdoptFormModalVisible(true)
                     }}
                     sx={{ m: 0 }}
                   >
@@ -663,7 +837,13 @@ const Dog_pound = () => {
                     onClick={() => {
                       closeMenu()
                       let id = row.original.id
-                      console.info(id)
+                      setFormDisposedData({
+                        ...formDisposedData,
+                        dogPoundId: id,
+                        date: '',
+                        medicine: '',
+                      })
+                      setDisposedFormModalVisible(true)
                     }}
                     sx={{ m: 0 }}
                   >
@@ -981,6 +1161,209 @@ const Dog_pound = () => {
                 </CFormSelect>
               </CCol>
 
+              <hr />
+              <CCol xs={12}>
+                <CButton color="primary" type="submit" className="float-end">
+                  Generate
+                </CButton>
+              </CCol>
+            </CForm>
+          </CModalBody>
+        </CModal>
+      </Draggable>
+
+      {/* Adopt Form */}
+
+      <Draggable
+        handle=".modal-header"
+        position={modalPosition}
+        onStop={(e, data) => {
+          setModalPosition({ x: data.x, y: data.y })
+        }}
+      >
+        <CModal
+          alignment="center"
+          visible={adoptFormModalVisible}
+          onClose={() => setAdoptFormModalVisible(false)}
+          backdrop="static"
+          keyboard={false}
+          size="lg"
+        >
+          <CModalHeader>
+            <CModalTitle>Adopt/Claim</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <RequiredNote />
+            <CForm
+              className="row g-3 needs-validation"
+              noValidate
+              validated={validated}
+              onSubmit={handleAdoptClaimSubmit}
+            >
+              <CCol md={12}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="Date is required"
+                  id="date"
+                  label={
+                    <>
+                      Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="date"
+                  value={formAdoptData.date}
+                  onChange={handleAdoptChange}
+                  required
+                />
+              </CCol>
+              <CCol md={12}>
+                <CFormInput
+                  type="text"
+                  feedbackInvalid="Name of the Owner is required"
+                  id="owner-name"
+                  label={
+                    <>
+                      Name of the Owner
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="owner_name"
+                  value={formAdoptData.owner_name}
+                  onChange={handleAdoptChange}
+                  required
+                />
+              </CCol>
+
+              <CCol md={12}>
+                <CFormSelect
+                  id="address"
+                  label={
+                    <>
+                      Address
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="address"
+                  value={formAdoptData.address}
+                  onChange={handleAdoptChange}
+                  required
+                  feedbackInvalid="Address is required"
+                >
+                  <option value="">Choose...</option>
+                  {barangayOptions.map((barangay) => (
+                    <option key={barangay.id} value={barangay.id}>
+                      {barangay.barangay}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
+
+              <CCol md={12}>
+                <CFormSelect
+                  feedbackInvalid="Sex is required"
+                  id="status"
+                  label={
+                    <>
+                      Status
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Choose...</option>
+                  <option value="Adopt">Adopt</option>
+                  <option value="Claim">Claim</option>
+                </CFormSelect>
+              </CCol>
+              <hr />
+              <CCol xs={12}>
+                <CButton color="primary" type="submit" className="float-end">
+                  Generate
+                </CButton>
+              </CCol>
+            </CForm>
+          </CModalBody>
+        </CModal>
+      </Draggable>
+
+      {/* Disposed */}
+
+      <Draggable
+        handle=".modal-header"
+        position={modalPosition}
+        onStop={(e, data) => {
+          setModalPosition({ x: data.x, y: data.y })
+        }}
+      >
+        <CModal
+          alignment="center"
+          visible={disposedFormModalVisible}
+          onClose={() => setDisposedFormModalVisible(false)}
+          backdrop="static"
+          keyboard={false}
+          size="lg"
+        >
+          <CModalHeader>
+            <CModalTitle>Disposed Dog</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <RequiredNote />
+            <CForm
+              className="row g-3 needs-validation"
+              noValidate
+              validated={validated}
+              onSubmit={handleDisposedSubmit}
+            >
+              <CCol md={12}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="Date is required"
+                  id="date"
+                  label={
+                    <>
+                      Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="date"
+                  value={formDisposedData.date}
+                  onChange={handleDisposedChange}
+                  required
+                />
+              </CCol>
+              <CCol md={12}>
+                <CFormInput
+                  type="text"
+                  feedbackInvalid="Name of the Medicine is required"
+                  id="medicine-name"
+                  label={
+                    <>
+                      Name of the Medicine
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="medicine"
+                  value={formDisposedData.medicine}
+                  onChange={handleDisposedChange}
+                  required
+                />
+              </CCol>
               <hr />
               <CCol xs={12}>
                 <CButton color="primary" type="submit" className="float-end">

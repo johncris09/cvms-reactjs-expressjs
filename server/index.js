@@ -8,6 +8,8 @@ import antiRabiesSpeciesRoute from "./routes/AntiRabiesSepcies.js"
 import dewormSpeciesRoute from "./routes/DewormSpecies.js"
 import antiRabiesVaccinationRoute from "./routes/AntiRabiesVaccination.js"
 import dogPoundRoute from "./routes/DogPound.js"
+import adoptClaimRoute from "./routes/AdoptClaim.js"
+import disposedDogRoute from "./routes/DisposedDog.js"
 const app = express() 
 
 // middleware for server
@@ -21,6 +23,8 @@ app.use("/anti_rabies_species",  antiRabiesSpeciesRoute);
 app.use("/deworm_species",  dewormSpeciesRoute);
 app.use("/anti_rabies_vaccination",  antiRabiesVaccinationRoute);
 app.use("/dog_pound",  dogPoundRoute);
+app.use("/adopt_claim",  adoptClaimRoute);
+app.use("/disposed_dog",  disposedDogRoute);
 
 app.get('/', (req, res) => {
     res.send("Weclome to the Server")
