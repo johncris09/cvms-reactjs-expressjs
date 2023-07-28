@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
 import { ExportToCsv } from 'export-to-csv'
 import { OroquietaCityLogo, cityVetLogo } from './../../helper/LogoReport'
-import { DeleteOutline, EditSharp, Handshake, MedicationLiquid } from '@mui/icons-material'
+import { DeleteOutline, EditSharp } from '@mui/icons-material'
 import { MenuItem, ListItemIcon, Box, darken } from '@mui/material'
 import CalculateAge from './../../helper/CalculateAge'
 import RequiredNote from './../../helper/RequiredNote'
@@ -673,7 +673,6 @@ const Anti_rabies_vaccination = () => {
                     key={1}
                     onClick={() => {
                       closeMenu()
-
                       Swal.fire({
                         title: 'Are you sure?',
                         text: "You won't be able to revert this!",
