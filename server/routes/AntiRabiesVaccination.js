@@ -17,6 +17,45 @@ router.get("/", async (req, res, next) => {
   });
 });
 
+router.get("/report", async (req, res, next) => {
+  const { start_date, end_date, address, species } = req.query;
+
+  let q =
+    "SELECT a.*, b.barangay as address, s.name as species \
+    FROM `anti_rabies_vaccination` as a, barangay as b, anti_rabies_species as s \
+  where a.address = b.id \
+  and a.species = s.id \
+  and a.date_vaccinated >= ?  \
+  and a.date_vaccinated <= ? \
+  and a.address <= ? ";
+
+  const queryParams = [start_date, end_date, address];
+
+  // Check if the 'species' parameter is provided and not empty
+  if (species && species.trim() !== "") {
+    q += " and a.species = ?";
+    queryParams.push(species);
+  }
+
+  q += " ORDER BY a.date_vaccinated DESC;";
+
+  db.query(q, queryParams, (err, results) => {
+    if (err) {
+      console.error("Error fetching data:", err);
+      res.status(500).json({ error: "Error fetching data" });
+      return;
+    }
+
+    if (results.length === 0) {
+      // If results array is empty, send an empty array as the response
+      res.json([]);
+      return;
+    }
+
+    res.json(results);
+  });
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const id = req.params.id;
@@ -138,7 +177,6 @@ router.put("/", async (req, res, next) => {
 
 router.delete("/", async (req, res, next) => {
   try {
-    
     const { id } = req.body;
     // Perform the delete operation
     const q = "DELETE FROM " + table + " WHERE id = ?";

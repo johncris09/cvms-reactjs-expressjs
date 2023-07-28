@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import MaterialReactTable from 'material-react-table'
-import { DeleteOutline, EditSharp } from '@mui/icons-material'
-import { MenuItem, ListItemIcon } from '@mui/material'
-import CalculateAge from '../../helper/CalculateAge'
-import RequiredNote from 'src/helper/RequiredNote'
-import ConvertToTitleCase from '../../helper/ConvertToTitleCase'
-import FormatDateTime from 'src/helper/FormatDateTime'
-import FormatDate from 'src/helper/FormatDate'
-import GetErrorMessage from 'src/helper/GetErrorMessage'
+import { ExportToCsv } from 'export-to-csv'
+import { OroquietaCityLogo, cityVetLogo } from './../../helper/LogoReport'
+import { DeleteOutline, EditSharp, Handshake, MedicationLiquid } from '@mui/icons-material'
+import { MenuItem, ListItemIcon, Box, darken } from '@mui/material'
+import CalculateAge from './../../helper/CalculateAge'
+import RequiredNote from './../../helper/RequiredNote'
+import ConvertToTitleCase from './../../helper/ConvertToTitleCase'
+import FormatDateTime from './../../helper/FormatDateTime'
+import FormatDate from './../../helper/FormatDate'
+import GetErrorMessage from './../../helper/GetErrorMessage'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons'
+import { faPlusCircle, faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons'
 import axios from 'axios'
 import ip from './../../constant/ip'
 import Draggable from 'react-draggable'
 import Swal from 'sweetalert2'
+import pdfMake from 'pdfmake/build/pdfmake'
+import pdfFonts from 'pdfmake/build/vfs_fonts'
+import withReactContent from 'sweetalert2-react-content'
 import {
   CButton,
   CCard,
@@ -30,12 +35,15 @@ import {
   CFormSelect,
 } from '@coreui/react'
 
+const MySwal = withReactContent(Swal)
+pdfMake.vfs = pdfFonts.pdfMake.vfs
 const Anti_rabies_vaccination = () => {
   const table = 'anti_rabies_vaccination'
   const [data, setData] = useState([])
   const [speciesOptions, setSpeciesOptions] = useState([])
   const [barangayOptions, setBarangayOptions] = useState([])
   const [editMode, setEditMode] = useState(false)
+  const [reportFormModalVisible, setReportFormModalVisible] = useState(false)
   const [validated, setValidated] = useState(false)
   const [newDataFormModalVisible, setNewDataFormModalVisible] = useState(false)
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
@@ -51,6 +59,12 @@ const Anti_rabies_vaccination = () => {
     sex: '',
     species: '',
     neutered: '',
+  })
+  const [formReportData, setFormReportData] = useState({
+    start_date: '',
+    end_date: '',
+    address: '',
+    species: '',
   })
 
   useEffect(() => {
@@ -76,6 +90,227 @@ const Anti_rabies_vaccination = () => {
     setNewDataFormModalVisible(true)
     setValidated(false)
     setSelectedItemId(null)
+  }
+
+  const handleReport = () => {
+    setReportFormModalVisible(true)
+  }
+
+  const handleReportSubmit = async (event) => {
+    const form = event.currentTarget
+    if (form.checkValidity() === false) {
+      event.preventDefault()
+      event.stopPropagation()
+    } else {
+      event.preventDefault()
+      const formData = new FormData(form)
+      const start_date = formData.get('start_date')
+      const end_date = formData.get('end_date')
+      const address = formData.get('address')
+      const species = formData.get('species')
+      generateReport({ start_date, end_date, address, species })
+    }
+    setValidated(true)
+  }
+
+  const generateReport = async (data) => {
+    const response = await axios.get(ip + table + '/report', {
+      params: {
+        ...data,
+      },
+    })
+
+    // get Barangay
+    let barangayName = 'All'
+
+    // Assuming barangayOptions is an array of objects with properties 'id' and 'barangay'
+    barangayOptions.forEach((option) => {
+      if (option.id == formReportData.address) {
+        barangayName = option.barangay
+        return false // This will break out of the forEach loop
+      }
+    })
+
+    // generate Report
+    if (response.data.length > 0) {
+      const content = []
+      // Add table header
+      const tableHeader = [
+        { text: "Owner's Name", style: 'tableHeader', bold: true },
+        { text: "Pet's Name", style: 'tableHeader', bold: true },
+        { text: 'Age', style: 'tableHeader', bold: true },
+        { text: 'Sex', style: 'tableHeader', bold: true },
+        { text: 'Color', style: 'tableHeader', bold: true },
+        { text: 'Species', style: 'tableHeader', bold: true },
+        { text: 'Neutered', style: 'tableHeader', bold: true },
+        { text: 'Vaccine Type', style: 'tableHeader', bold: true },
+      ]
+      content.push(tableHeader)
+
+      // Add table rows
+      for (const item of response.data) {
+        let speciesName = ''
+        if (item.species === 'Dog') {
+          speciesName = 'C'
+        } else if (item.species === 'Cat') {
+          speciesName = 'F'
+        } else if (item.species === 'Monkey') {
+          speciesName = 'P'
+        }
+
+        let speciesSex = ''
+        if (item.sex === 'Male') {
+          speciesSex = 'M'
+        } else if (item.sex === 'Female') {
+          speciesSex = 'F'
+        }
+        const age = CalculateAge(item.pet_birthdate)
+        const tableRow = [
+          item.owner_name,
+          item.pet_name,
+          age,
+          speciesSex,
+          item.color,
+          speciesName,
+          item.neutered,
+          item.vaccine_type,
+        ]
+        content.push(tableRow)
+      }
+
+      const currentDateTime = new Date().toLocaleString('en-US')
+      const documentDefinition = {
+        footer: function (currentPage, pageCount) {
+          return {
+            columns: [
+              {
+                text: `Date Printed: ${currentDateTime}`,
+                alignment: 'left',
+                fontSize: 8,
+                margin: [20, 0],
+              },
+              {
+                text: `Page ${currentPage} of ${pageCount}`,
+                alignment: 'right',
+                fontSize: 8,
+                margin: [0, 0, 20, 0],
+              },
+            ],
+            margin: [20, 10],
+          }
+        },
+        content: [
+          {
+            columns: [
+              {
+                width: 'auto',
+                image: cityVetLogo,
+                fit: [50, 50],
+              },
+              {
+                text: [
+                  'Republic of the Philippines\n',
+                  'OFFICE OF THE VETERINARIAN\n',
+                  'Oroquieta City\n\n',
+                  {
+                    text: 'City of Good Life',
+                    style: 'subheaderText',
+                    alignment: 'center',
+                    italics: true,
+                    bold: true,
+                  },
+                ],
+                style: 'headerText',
+                bold: false,
+                alignment: 'center',
+              },
+              {
+                width: 'auto',
+                image: OroquietaCityLogo,
+                fit: [50, 50],
+                alignment: 'right',
+              },
+            ],
+          },
+          {
+            columns: [
+              {
+                text: 'ANTI-RABIES VACCINATION\n',
+                style: 'headerText',
+                bold: true,
+                alignment: 'center',
+              },
+            ],
+          },
+          {
+            text: '\n\n', // Add some spacing between the header and the table
+          },
+          {
+            columns: [
+              {
+                width: 'auto',
+                text: 'Barangay: ' + barangayName,
+                text: [
+                  'Barangay: ',
+                  {
+                    text: barangayName,
+                    bold: true,
+                    decoration: 'underline',
+                  },
+                ],
+                fit: [200, 200],
+              },
+              {
+                text: [' '],
+                style: 'headerText',
+                bold: false,
+                alignment: 'center',
+              },
+              {
+                text: [
+                  'Date: ',
+                  {
+                    text:
+                      FormatDate(formReportData.start_date) +
+                      ' - ' +
+                      FormatDate(formReportData.end_date),
+                    bold: true,
+                    decoration: 'underline',
+                  },
+                ],
+                fit: [200, 200],
+                alignment: 'right',
+              },
+            ],
+          },
+          {
+            style: 'tableDesign',
+            table: {
+              body: content,
+            },
+            alignment: 'center',
+          },
+        ],
+        styles: {
+          tableDesign: {
+            margin: [0, 5, 0, 15],
+            fontSize: 10,
+          },
+          footer: {
+            fontSize: 8,
+          },
+        },
+      }
+      const pdfDoc = pdfMake.createPdf(documentDefinition)
+      pdfDoc.open()
+    } else {
+      // Show error message
+      MySwal.fire({
+        title: <strong>No record found</strong>,
+        html: <i>There are no records matching your search criteria.</i>,
+        icon: 'info',
+      })
+    }
   }
 
   const fetchData = async () => {
@@ -234,6 +469,11 @@ const Anti_rabies_vaccination = () => {
     setFormData({ ...formData, [name]: updatedValue })
   }
 
+  const handleReportChange = (e) => {
+    const { name, value } = e.target
+    setFormReportData({ ...formReportData, [name]: value })
+  }
+
   const columns = [
     {
       accessorKey: 'date_vaccinated',
@@ -281,13 +521,65 @@ const Anti_rabies_vaccination = () => {
     },
   ]
 
+  const csvOptions = {
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalSeparator: '.',
+    showLabels: true,
+    useBom: true,
+    useKeysAsHeaders: false,
+    headers: columns.map((c) => c.header),
+  }
+
+  const csvExporter = new ExportToCsv(csvOptions)
+  const handleExportRows = (rows) => {
+    const exportedData = rows
+      .map((row) => row.original)
+      .map((item) => {
+        return {
+          date_vaccinated: item.date_vaccinated,
+          address: item.address,
+          owner_name: item.owner_name,
+          pet_name: item.pet_name,
+          age: item.age,
+          sex: item.sex,
+          color: item.color,
+          species: item.species,
+          neutered: item.neutered,
+          vaccine_type: item.vaccine_type,
+          created_at: item.timestamp,
+        }
+      })
+
+    csvExporter.generateCsv(exportedData)
+  }
+  const handleExportData = () => {
+    const exportedData = data.map((item) => {
+      return {
+        date_vaccinated: item.date_vaccinated,
+        address: item.address,
+        owner_name: item.owner_name,
+        pet_name: item.pet_name,
+        age: item.age,
+        sex: item.sex,
+        color: item.color,
+        species: item.species,
+        neutered: item.neutered,
+        vaccine_type: item.vaccine_type,
+        created_at: item.timestamp,
+      }
+    })
+    csvExporter.generateCsv(exportedData)
+  }
   return (
     <CRow>
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader>
-            <strong>Anti Rabies Vaccination</strong>
-
+            <strong>Anti-Rabies Vaccination</strong>
+            <CButton color="success" variant="outline" className="float-end" onClick={handleReport}>
+              <FontAwesomeIcon icon={faFilePdf} /> Generate Report
+            </CButton>
             <CButton
               color="primary"
               variant="outline"
@@ -302,6 +594,20 @@ const Anti_rabies_vaccination = () => {
               <MaterialReactTable
                 columns={columns}
                 data={data}
+                muiTablePaperProps={{
+                  elevation: 0,
+                  sx: {
+                    borderRadius: '0',
+                    border: '1px dashed #e0e0e0',
+                  },
+                }}
+                muiTableBodyProps={{
+                  sx: (theme) => ({
+                    '& tr:nth-of-type(odd)': {
+                      backgroundColor: darken(theme.palette.background.default, 0.05),
+                    },
+                  }),
+                }}
                 enableColumnFilterModes
                 enableColumnOrdering
                 enableGrouping
@@ -310,6 +616,7 @@ const Anti_rabies_vaccination = () => {
                 enableColumnResizing
                 initialState={{ density: 'compact' }}
                 positionToolbarAlertBanner="bottom"
+                enableRowSelection
                 renderRowActionMenuItems={({ closeMenu, row }) => [
                   <MenuItem
                     key={0}
@@ -391,6 +698,21 @@ const Anti_rabies_vaccination = () => {
                     Delete
                   </MenuItem>,
                 ]}
+                renderTopToolbarCustomActions={({ table }) => (
+                  <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
+                    <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
+                      <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
+                    </CButton>
+                    <CButton
+                      disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
+                      //only export selected rows
+                      onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
+                      variant="outline"
+                    >
+                      <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
+                    </CButton>
+                  </Box>
+                )}
               />
             </>
           </CCardBody>
@@ -398,7 +720,6 @@ const Anti_rabies_vaccination = () => {
       </CCol>
 
       {/* Add new Data */}
-
       <Draggable
         handle=".modal-header"
         position={modalPosition}
@@ -523,7 +844,7 @@ const Anti_rabies_vaccination = () => {
                 >
                   <option value="">Choose...</option>
                   {barangayOptions.map((barangay) => (
-                    <option key={barangay.barangay} value={barangay.id}>
+                    <option key={barangay.id} value={barangay.id}>
                       {barangay.barangay}
                     </option>
                   ))}
@@ -640,6 +961,124 @@ const Anti_rabies_vaccination = () => {
               <CCol xs={12}>
                 <CButton color="primary" type="submit" className="float-end">
                   {editMode ? 'Update' : 'Submit form'}
+                </CButton>
+              </CCol>
+            </CForm>
+          </CModalBody>
+        </CModal>
+      </Draggable>
+
+      {/* Report */}
+      <Draggable
+        handle=".modal-header"
+        position={modalPosition}
+        onStop={(e, data) => {
+          setModalPosition({ x: data.x, y: data.y })
+        }}
+      >
+        <CModal
+          alignment="center"
+          visible={reportFormModalVisible}
+          onClose={() => setReportFormModalVisible(false)}
+          backdrop="static"
+          keyboard={false}
+          size="lg"
+        >
+          <CModalHeader>
+            <CModalTitle>Generate Report</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <RequiredNote />
+            <CForm
+              className="row g-3 needs-validation"
+              noValidate
+              validated={validated}
+              onSubmit={handleReportSubmit}
+            >
+              <CCol md={6}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="Start Date is required"
+                  id="start-date"
+                  label={
+                    <>
+                      Start Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="start_date"
+                  value={formReportData.start_date}
+                  onChange={handleReportChange}
+                  required
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormInput
+                  type="date"
+                  feedbackInvalid="End Date is required"
+                  id="end-date"
+                  label={
+                    <>
+                      End Date
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="end_date"
+                  value={formReportData.end_date}
+                  onChange={handleReportChange}
+                  required
+                />
+              </CCol>
+              <CCol md={12}>
+                <CFormSelect
+                  id="address"
+                  feedbackInvalid="Address is required"
+                  label={
+                    <>
+                      Address
+                      <span className="text-warning">
+                        <strong>*</strong>
+                      </span>
+                    </>
+                  }
+                  name="address"
+                  value={formReportData.address}
+                  onChange={handleReportChange}
+                  required
+                >
+                  <option value="">Choose...</option>
+                  {barangayOptions.map((barangay) => (
+                    <option key={barangay.id} value={barangay.id}>
+                      {barangay.barangay}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
+              <CCol md={12}>
+                <CFormSelect
+                  feedbackInvalid="Species is required"
+                  id="species"
+                  label="Species"
+                  name="species"
+                  value={formReportData.species}
+                  onChange={handleReportChange}
+                >
+                  <option value="">Choose...</option>
+                  {speciesOptions.map((species) => (
+                    <option key={species.id} value={species.id}>
+                      {species.name}
+                    </option>
+                  ))}
+                </CFormSelect>
+              </CCol>
+              <hr />
+              <CCol xs={12}>
+                <CButton color="primary" type="submit" className="float-end">
+                  <FontAwesomeIcon icon={faFilePdf} /> Generate Report
                 </CButton>
               </CCol>
             </CForm>
