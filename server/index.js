@@ -13,6 +13,7 @@ import disposedDogRoute from "./routes/DisposedDog.js"
 import dewormingRoute from "./routes/Deworming.js"
 import loginRoute from "./routes/Login.js"
 import userRoute from "./routes/Users.js"
+import backupRoute from "./routes/Backup.js"
 const app = express() 
 
 // middleware for server
@@ -31,6 +32,7 @@ app.use("/disposed_dog",  disposedDogRoute);
 app.use("/deworming",  dewormingRoute);
 app.use("/login",  loginRoute);
 app.use("/users",  userRoute);
+app.use("/backup",  backupRoute);
 
 app.get('/', (req, res) => {
     res.send("Weclome to the Server")
