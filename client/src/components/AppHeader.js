@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
@@ -16,10 +16,13 @@ import { cilMenu } from '@coreui/icons'
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
 
-const AppHeader = () => {
+const AppHeader = (userInfo) => {
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
-
+  // const { email } = userInfo.userInfo
+  useEffect(() => {
+    // console.info(email)
+  }, [])
   return (
     <CHeader position="sticky" className="mb-4">
       <CContainer fluid>
@@ -37,7 +40,7 @@ const AppHeader = () => {
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="ms-3">
-          <AppHeaderDropdown userId={1} />
+          <AppHeaderDropdown email={userInfo.userInfo.email} />
         </CHeaderNav>
       </CContainer>
       <CHeaderDivider />

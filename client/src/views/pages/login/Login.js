@@ -1,5 +1,6 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import ip from './../../../constant/ip'
 import {
   CButton,
   CCard,
@@ -10,15 +11,70 @@ import {
   CForm,
   CFormInput,
   CImage,
-  CInputGroup,
-  CInputGroupText,
   CRow,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilUser } from '@coreui/icons'
 import logo from './../../../assets/images/logo.png'
+import Swal from 'sweetalert2'
+import GetErrorMessage from './../../../helper/GetErrorMessage'
+import axios from 'axios'
 
 const Login = () => {
+  const table = 'login'
+  const navigate = useNavigate()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [token, setToken] = useState('')
+  const [validated, setValidated] = useState(false)
+  const [formData, setFormData] = useState({
+    username: 'johncris',
+    password: 'johncris',
+  })
+
+  useEffect(() => {
+    // Check if the token is set in local storage or cookies
+    const token = localStorage.getItem('token') // Assuming the token is stored in local storage
+
+    if (token) {
+      // If the token is set, navigate to the dashboard
+      navigate('/dashboard', { replace: true })
+    }
+  }, [navigate])
+
+  const handleLogin = async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const _formData = new FormData(form)
+    const username = _formData.get('username')
+    const password = _formData.get('password')
+    try {
+      if (!form.checkValidity()) {
+        form.reportValidity()
+      } else {
+        const response = await axios.post(ip + table, { username, password })
+        const token = response.data.token
+
+        // Set the token to localStorage
+        localStorage.setItem('token', token)
+
+        // Navigate to the dashboard
+        navigate('/dashboard', { replace: true })
+      }
+    } catch (error) {
+      // Show error message
+      Swal.fire({
+        title: 'Error!',
+        html: GetErrorMessage(error),
+        icon: 'error',
+      })
+    }
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+
+    setFormData({ ...formData, [name]: value })
+  }
+
   return (
     <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -39,27 +95,43 @@ const Login = () => {
                       }}
                     />
                   </div>
-                  <CForm>
+
+                  <CForm
+                    className="row g-3 needs-validation"
+                    noValidate
+                    validated={validated}
+                    onSubmit={handleLogin}
+                  >
                     <h3 className="text-center">
                       Office of the City Veterinarian <br /> Monitoring System
                     </h3>
                     <p className="text-medium-emphasis text-center">Sign In to your account</p>
+
                     <CFormInput
-                      className="text-center mb-2 py-2"
+                      type="text"
+                      className="text-center py-2"
+                      feedbackInvalid="Name of Farmer is required"
+                      id="username"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
                       placeholder="Username"
-                      autoComplete="username"
+                      required
                     />
                     <CFormInput
-                      className="text-center mb-4 py-2"
                       type="password"
+                      className="text-center py-2"
+                      feedbackInvalid="Name of Farmer is required"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Password"
-                      autoComplete="current-password"
+                      required
                     />
-                    <CRow>
-                      <div className="d-grid gap-2">
-                        <CButton color="primary">Login</CButton>
-                      </div>
-                    </CRow>
+                    <CButton type="submit" color="primary">
+                      Login
+                    </CButton>
                   </CForm>
                 </CCardBody>
               </CCard>

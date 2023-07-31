@@ -11,6 +11,8 @@ import dogPoundRoute from "./routes/DogPound.js"
 import adoptClaimRoute from "./routes/AdoptClaim.js"
 import disposedDogRoute from "./routes/DisposedDog.js"
 import dewormingRoute from "./routes/Deworming.js"
+import loginRoute from "./routes/Login.js"
+import userRoute from "./routes/Users.js"
 const app = express() 
 
 // middleware for server
@@ -27,6 +29,8 @@ app.use("/dog_pound",  dogPoundRoute);
 app.use("/adopt_claim",  adoptClaimRoute);
 app.use("/disposed_dog",  disposedDogRoute);
 app.use("/deworming",  dewormingRoute);
+app.use("/login",  loginRoute);
+app.use("/users",  userRoute);
 
 app.get('/', (req, res) => {
     res.send("Weclome to the Server")

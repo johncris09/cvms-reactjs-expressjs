@@ -1,6 +1,7 @@
 import React from 'react'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
+const Pending = React.lazy(() => import('./views/pending/Pending'))
 const Dog_pound = React.lazy(() => import('./views/manage_dog/dog_pound/Dog_pound'))
 const AdoptClaim = React.lazy(() => import('./views/manage_dog/adoptclaim/AdoptClaim'))
 const Disposed = React.lazy(() => import('./views/manage_dog/disposed/Disposed'))
@@ -20,6 +21,7 @@ const Config = React.lazy(() => import('./views/config/Config'))
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
+  { path: '/pending', name: 'Pending', element: Pending },
   { path: '/manage_dog', name: 'Manage Dog', element: Dog_pound, exact: true },
   { path: '/manage_dog/dog_pound', name: 'Dog Pound', element: Dog_pound },
   { path: '/manage_dog/adopt_claim', name: 'Adopt/Claim', element: AdoptClaim },

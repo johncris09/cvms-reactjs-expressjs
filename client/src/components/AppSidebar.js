@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { CImage, CSidebar, CSidebarBrand, CSidebarNav, CSidebarToggler } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
@@ -11,10 +11,13 @@ import 'simplebar/dist/simplebar.min.css'
 import navigation from '../_nav'
 import logo from './../assets/images/logo.png'
 
-const AppSidebar = () => {
+const AppSidebar = ({ userInfo }) => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  useEffect(() => {
+    console.info(userInfo.status)
+  }, [])
 
   return (
     <CSidebar
@@ -33,7 +36,7 @@ const AppSidebar = () => {
       </CSidebarBrand>
       <CSidebarNav>
         <SimpleBar>
-          <AppSidebarNav items={navigation} />
+          {userInfo.status === 'Approved' ? <AppSidebarNav items={navigation} /> : ''}
         </SimpleBar>
       </CSidebarNav>
       <CSidebarToggler
