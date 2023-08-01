@@ -34,7 +34,7 @@ const AppSidebar = ({ userInfo }) => {
       </CSidebarBrand>
       <CSidebarNav>
         <SimpleBar>
-          {userInfo.status === 'Approved' ? <AppSidebarNav items={navigation} /> : ''}
+          {userInfo.status === 'Approved' ? <AppSidebarNav items={navigation(userInfo)} /> : ''}
         </SimpleBar>
       </CSidebarNav>
       <CSidebarToggler

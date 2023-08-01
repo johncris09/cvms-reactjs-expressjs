@@ -49,7 +49,7 @@ import {
 
 const MySwal = withReactContent(Swal)
 pdfMake.vfs = pdfFonts.pdfMake.vfs
-const Deworming = () => {
+const Deworming = ({ userInfo }) => {
   const table = 'deworming'
   const [data, setData] = useState([])
   const [newDataFormModalVisible, setNewDataFormModalVisible] = useState(false)
@@ -574,146 +574,184 @@ const Deworming = () => {
         <CCard className="mb-4">
           <CCardHeader>
             <strong>Deworming</strong>
-            <CButton color="success" variant="outline" className="float-end" onClick={handleReport}>
-              <FontAwesomeIcon icon={faFilePdf} /> Generate Report
-            </CButton>
-            <CButton
-              color="primary"
-              variant="outline"
-              className="float-end mx-1"
-              onClick={handleAdd}
-            >
-              <FontAwesomeIcon icon={faPlusCircle} /> Add New Data
-            </CButton>
+            {userInfo.role_type !== 'User' && (
+              <>
+                <CButton
+                  color="success"
+                  variant="outline"
+                  className="float-end"
+                  onClick={handleReport}
+                >
+                  <FontAwesomeIcon icon={faFilePdf} /> Generate Report
+                </CButton>
+                <CButton
+                  color="primary"
+                  variant="outline"
+                  className="float-end mx-1"
+                  onClick={handleAdd}
+                >
+                  <FontAwesomeIcon icon={faPlusCircle} /> Add New Data
+                </CButton>
+              </>
+            )}
           </CCardHeader>
           <CCardBody>
-            <MaterialReactTable
-              columns={columns}
-              data={data}
-              muiTablePaperProps={{
-                elevation: 0,
-                sx: {
-                  borderRadius: '0',
-                  border: '1px dashed #e0e0e0',
-                },
-              }}
-              muiTableBodyProps={{
-                sx: (theme) => ({
-                  '& tr:nth-of-type(odd)': {
-                    backgroundColor: darken(theme.palette.background.default, 0.05),
+            {userInfo.role_type !== 'User' && (
+              <MaterialReactTable
+                columns={columns}
+                data={data}
+                muiTablePaperProps={{
+                  elevation: 0,
+                  sx: {
+                    borderRadius: '0',
+                    border: '1px dashed #e0e0e0',
                   },
-                }),
-              }}
-              enableColumnFilterModes
-              enableColumnOrdering
-              enableGrouping
-              enablePinning
-              enableRowActions
-              enableColumnResizing
-              initialState={{ density: 'compact' }}
-              positionToolbarAlertBanner="bottom"
-              enableRowSelection
-              renderRowActionMenuItems={({ closeMenu, row }) => [
-                <MenuItem
-                  key={0}
-                  onClick={async () => {
-                    closeMenu()
+                }}
+                muiTableBodyProps={{
+                  sx: (theme) => ({
+                    '& tr:nth-of-type(odd)': {
+                      backgroundColor: darken(theme.palette.background.default, 0.05),
+                    },
+                  }),
+                }}
+                enableColumnFilterModes
+                enableColumnOrdering
+                enableGrouping
+                enablePinning
+                enableRowActions
+                enableColumnResizing
+                initialState={{ density: 'compact' }}
+                positionToolbarAlertBanner="bottom"
+                enableRowSelection
+                renderRowActionMenuItems={({ closeMenu, row }) => [
+                  <MenuItem
+                    key={0}
+                    onClick={async () => {
+                      closeMenu()
 
-                    let id = row.original.id
-                    try {
-                      const response = await axios.get(ip + table + '/' + id)
-                      var rowData = response.data
-                      const dateString = rowData.date_deworming
+                      let id = row.original.id
+                      try {
+                        const response = await axios.get(ip + table + '/' + id)
+                        var rowData = response.data
+                        const dateString = rowData.date_deworming
 
-                      // convert amount value to array
-                      const inputs = rowData.amount.split(',').map((value, index) => ({
-                        id: index + 1,
-                        value,
-                      }))
+                        // convert amount value to array
+                        const inputs = rowData.amount.split(',').map((value, index) => ({
+                          id: index + 1,
+                          value,
+                        }))
 
-                      // Convert the date string to a Date object
-                      const date = new Date(dateString)
-                      // Add one day to the Date object
-                      date.setUTCDate(date.getUTCDate() + 1)
+                        // Convert the date string to a Date object
+                        const date = new Date(dateString)
+                        // Add one day to the Date object
+                        date.setUTCDate(date.getUTCDate() + 1)
 
-                      // Extract the updated year, month, and day parts after adding one day
-                      const updatedYear = date.getUTCFullYear()
-                      const updatedMonth = String(date.getUTCMonth() + 1).padStart(2, '0')
-                      const updatedDay = String(date.getUTCDate()).padStart(2, '0')
+                        // Extract the updated year, month, and day parts after adding one day
+                        const updatedYear = date.getUTCFullYear()
+                        const updatedMonth = String(date.getUTCMonth() + 1).padStart(2, '0')
+                        const updatedDay = String(date.getUTCDate()).padStart(2, '0')
 
-                      // Format the updated date in Y-m-d format
-                      const updatedFormattedDate = `${updatedYear}-${updatedMonth}-${updatedDay}`
+                        // Format the updated date in Y-m-d format
+                        const updatedFormattedDate = `${updatedYear}-${updatedMonth}-${updatedDay}`
 
-                      setFormData({
-                        date_deworming: updatedFormattedDate,
-                        address: rowData.address,
-                        farmer_name: rowData.farmer_name,
-                        species: rowData.species,
-                        female: rowData.female,
-                        male: rowData.male,
-                        head_number: rowData.head_number,
-                        treatment: rowData.treatment,
-                        inputs: inputs,
-                      })
+                        setFormData({
+                          date_deworming: updatedFormattedDate,
+                          address: rowData.address,
+                          farmer_name: rowData.farmer_name,
+                          species: rowData.species,
+                          female: rowData.female,
+                          male: rowData.male,
+                          head_number: rowData.head_number,
+                          treatment: rowData.treatment,
+                          inputs: inputs,
+                        })
 
-                      setSelectedItemId(row.original.id) // Set the selected item ID
-                      setNewDataFormModalVisible(true)
-                      setEditMode(true)
-                    } catch (error) {
-                      console.error('Error fetching data:', error)
-                    }
-                  }}
-                  sx={{ m: 0 }}
-                >
-                  <ListItemIcon>
-                    <EditSharp />
-                  </ListItemIcon>
-                  Edit
-                </MenuItem>,
-                <MenuItem
-                  key={1}
-                  onClick={() => {
-                    closeMenu()
-                    Swal.fire({
-                      title: 'Are you sure?',
-                      text: "You won't be able to revert this!",
-                      icon: 'warning',
-                      showCancelButton: true,
-                      confirmButtonColor: '#3085d6',
-                      cancelButtonColor: '#d33',
-                      confirmButtonText: 'Yes, delete it!',
-                    }).then(async (result) => {
-                      if (result.isConfirmed) {
-                        let itemId = row.original.id
-                        await deleteData(itemId)
-                        fetchData()
+                        setSelectedItemId(row.original.id) // Set the selected item ID
+                        setNewDataFormModalVisible(true)
+                        setEditMode(true)
+                      } catch (error) {
+                        console.error('Error fetching data:', error)
                       }
-                    })
-                  }}
-                  sx={{ m: 0 }}
-                >
-                  <ListItemIcon>
-                    <DeleteOutline />
-                  </ListItemIcon>
-                  Delete
-                </MenuItem>,
-              ]}
-              renderTopToolbarCustomActions={({ table }) => (
-                <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
-                  <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
-                    <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
-                  </CButton>
-                  <CButton
-                    disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
-                    //only export selected rows
-                    onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
-                    variant="outline"
+                    }}
+                    sx={{ m: 0 }}
                   >
-                    <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
-                  </CButton>
-                </Box>
-              )}
-            />
+                    <ListItemIcon>
+                      <EditSharp />
+                    </ListItemIcon>
+                    Edit
+                  </MenuItem>,
+                  <MenuItem
+                    key={1}
+                    onClick={() => {
+                      closeMenu()
+                      Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!',
+                      }).then(async (result) => {
+                        if (result.isConfirmed) {
+                          let itemId = row.original.id
+                          await deleteData(itemId)
+                          fetchData()
+                        }
+                      })
+                    }}
+                    sx={{ m: 0 }}
+                  >
+                    <ListItemIcon>
+                      <DeleteOutline />
+                    </ListItemIcon>
+                    Delete
+                  </MenuItem>,
+                ]}
+                renderTopToolbarCustomActions={({ table }) => (
+                  <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
+                    <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
+                      <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
+                    </CButton>
+                    <CButton
+                      disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
+                      //only export selected rows
+                      onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
+                      variant="outline"
+                    >
+                      <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
+                    </CButton>
+                  </Box>
+                )}
+              />
+            )}
+            {userInfo.role_type === 'User' && (
+              <MaterialReactTable
+                columns={columns}
+                data={data}
+                muiTablePaperProps={{
+                  elevation: 0,
+                  sx: {
+                    borderRadius: '0',
+                    border: '1px dashed #e0e0e0',
+                  },
+                }}
+                muiTableBodyProps={{
+                  sx: (theme) => ({
+                    '& tr:nth-of-type(odd)': {
+                      backgroundColor: darken(theme.palette.background.default, 0.05),
+                    },
+                  }),
+                }}
+                enableColumnFilterModes
+                enableColumnOrdering
+                enableGrouping
+                enablePinning
+                enableColumnResizing
+                initialState={{ density: 'compact' }}
+                positionToolbarAlertBanner="bottom"
+              />
+            )}
           </CCardBody>
         </CCard>
       </CCol>

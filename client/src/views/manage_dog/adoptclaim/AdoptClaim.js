@@ -13,7 +13,7 @@ import pdfFonts from 'pdfmake/build/vfs_fonts'
 import { CButton, CCard, CCardBody, CCardHeader, CCol, CRow } from '@coreui/react'
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs
-const AdoptClaim = () => {
+const AdoptClaim = ({ userInfo }) => {
   const table = 'adopt_claim'
   const [data, setData] = useState([])
   const [barangayOptions, setBarangayOptions] = useState([])
@@ -133,47 +133,76 @@ const AdoptClaim = () => {
           </CCardHeader>
           <CCardBody>
             <>
-              <MaterialReactTable
-                columns={columns}
-                data={data}
-                muiTablePaperProps={{
-                  elevation: 0,
-                  sx: {
-                    borderRadius: '0',
-                    border: '1px dashed #e0e0e0',
-                  },
-                }}
-                muiTableBodyProps={{
-                  sx: (theme) => ({
-                    '& tr:nth-of-type(odd)': {
-                      backgroundColor: darken(theme.palette.background.default, 0.05),
+              {userInfo.role_type !== 'User' && (
+                <MaterialReactTable
+                  columns={columns}
+                  data={data}
+                  muiTablePaperProps={{
+                    elevation: 0,
+                    sx: {
+                      borderRadius: '0',
+                      border: '1px dashed #e0e0e0',
                     },
-                  }),
-                }}
-                enableColumnFilterModes
-                enableColumnOrdering
-                enableGrouping
-                enablePinning
-                enableColumnResizing
-                initialState={{ density: 'compact' }}
-                positionToolbarAlertBanner="bottom"
-                enableRowSelection
-                renderTopToolbarCustomActions={({ table }) => (
-                  <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
-                    <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
-                      <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
-                    </CButton>
-                    <CButton
-                      disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
-                      //only export selected rows
-                      onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
-                      variant="outline"
-                    >
-                      <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
-                    </CButton>
-                  </Box>
-                )}
-              />
+                  }}
+                  muiTableBodyProps={{
+                    sx: (theme) => ({
+                      '& tr:nth-of-type(odd)': {
+                        backgroundColor: darken(theme.palette.background.default, 0.05),
+                      },
+                    }),
+                  }}
+                  enableColumnFilterModes
+                  enableColumnOrdering
+                  enableGrouping
+                  enablePinning
+                  enableColumnResizing
+                  initialState={{ density: 'compact' }}
+                  positionToolbarAlertBanner="bottom"
+                  enableRowSelection
+                  renderTopToolbarCustomActions={({ table }) => (
+                    <Box sx={{ display: 'flex', gap: '1rem', p: '0.5rem', flexWrap: 'wrap' }}>
+                      <CButton size="md" className="btn-info text-white" onClick={handleExportData}>
+                        <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
+                      </CButton>
+                      <CButton
+                        disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
+                        //only export selected rows
+                        onClick={() => handleExportRows(table.getSelectedRowModel().rows)}
+                        variant="outline"
+                      >
+                        <FontAwesomeIcon icon={faFileExcel} /> Export Selected Rows
+                      </CButton>
+                    </Box>
+                  )}
+                />
+              )}
+              {userInfo.role_type === 'User' && (
+                <MaterialReactTable
+                  columns={columns}
+                  data={data}
+                  muiTablePaperProps={{
+                    elevation: 0,
+                    sx: {
+                      borderRadius: '0',
+                      border: '1px dashed #e0e0e0',
+                    },
+                  }}
+                  muiTableBodyProps={{
+                    sx: (theme) => ({
+                      '& tr:nth-of-type(odd)': {
+                        backgroundColor: darken(theme.palette.background.default, 0.05),
+                      },
+                    }),
+                  }}
+                  enableColumnFilterModes
+                  enableColumnOrdering
+                  enableGrouping
+                  enablePinning
+                  enableColumnResizing
+                  initialState={{ density: 'compact' }}
+                  positionToolbarAlertBanner="bottom"
+                />
+              )}
             </>
           </CCardBody>
         </CCard>
