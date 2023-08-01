@@ -24,7 +24,7 @@ const authenticateToken = (req, res, next) => {
   }
   jwt.verify(token, 'secretKey', (err, user) => {
     if (err) {
-      return res.sendStatus(403); // Forbidden
+      return res.sendStatus(200); // Forbidden
     }
     req.user = user;
     next();

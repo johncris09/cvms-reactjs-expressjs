@@ -26,8 +26,8 @@ const Login = () => {
   const [token, setToken] = useState('')
   const [validated, setValidated] = useState(false)
   const [formData, setFormData] = useState({
-    username: 'johncris',
-    password: 'johncris',
+    username: '',
+    password: '',
   })
 
   useEffect(() => {

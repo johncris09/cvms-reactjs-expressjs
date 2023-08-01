@@ -229,7 +229,6 @@ const User = () => {
                     key={0}
                     onClick={async () => {
                       closeMenu()
-                      console.info(row.original)
                       setFormData({
                         name: row.original.name,
                         email: row.original.email,

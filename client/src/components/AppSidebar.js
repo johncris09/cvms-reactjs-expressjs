@@ -15,9 +15,7 @@ const AppSidebar = ({ userInfo }) => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
-  useEffect(() => {
-    console.info(userInfo.status)
-  }, [])
+  useEffect(() => {}, [])
 
   return (
     <CSidebar

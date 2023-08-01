@@ -5,7 +5,7 @@ const table = "deworming";
 
 router.get("/", async (req, res, next) => {
   const q =
-    "SELECT  d.*, b.barangay as address, m.medication as treatment, s.name as species \
+    "SELECT  d.*, b.barangay as address, m.medication as treatment, s.name as species, s.id as speciesId\
   FROM  deworming as d, medication as m, barangay as b, deworm_species as s\
   WHERE  d.address = b.id and d.treatment = m.id and d.species = s.id \
    order by d.date_deworming desc;";

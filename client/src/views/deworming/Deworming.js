@@ -198,7 +198,6 @@ const Deworming = () => {
         ]
         content.push(tableRow)
       }
-      console.info(content)
 
       const currentDateTime = new Date().toLocaleString('en-US')
       const documentDefinition = {
@@ -499,6 +498,14 @@ const Deworming = () => {
     {
       accessorKey: 'head_number',
       header: 'Head(s)',
+    },
+    {
+      accessorKey: 'female',
+      header: 'Female(s)',
+    },
+    {
+      accessorKey: 'male',
+      header: 'Male(s)',
     },
     {
       accessorKey: 'treatment',

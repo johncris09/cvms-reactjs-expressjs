@@ -20,9 +20,7 @@ const AppHeader = (userInfo) => {
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
   // const { email } = userInfo.userInfo
-  useEffect(() => {
-    // console.info(email)
-  }, [])
+  useEffect(() => {}, [])
   return (
     <CHeader position="sticky" className="mb-4">
       <CContainer fluid>

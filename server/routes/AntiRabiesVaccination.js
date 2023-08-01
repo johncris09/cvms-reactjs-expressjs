@@ -5,7 +5,7 @@ const table = "anti_rabies_vaccination";
 
 router.get("/", async (req, res, next) => {
   const q =
-    "SELECT anti_rabies_vaccination.*, barangay.barangay as address, anti_rabies_species.name as species \
+    "SELECT anti_rabies_vaccination.*, barangay.barangay as address, anti_rabies_species.name as species, anti_rabies_species.id as speciesId \
            FROM anti_rabies_vaccination, barangay, anti_rabies_species \
            where anti_rabies_vaccination.address = barangay.id \
            and anti_rabies_vaccination.species = anti_rabies_species.id \
